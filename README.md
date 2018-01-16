@@ -1,9 +1,10 @@
 # EthereumMiddleware
 
 # When whole data structure cannot fit into memory
-1. Store snapshot of balances for transactions with large amount of confirmations, since they are unlikely to be reverted. For instance, balances with more than 6 confirmations. In other words, only store balances of blocks with less than certain confirmations (e.g. 6)
-2. If the median is the only thing the client app cares, instead of maintaining full balances data, we can try to only maintain the median for all account balances, which means only re-calculate median when performed transactions affect it.
-3. Each block stores balances that affected by contained transactions, such that reduce memory usage. However, such method will certainly increases the time required to calculate median since retrieval of full account balances might require traversal of block history.
+Current solution trades memory for efficiency of retrieval balances.
+To reduces memory consumption:
+1. Each block caches the view of changed balances, not all account balances. However, querying for median requires traversal of block history in order to achieve full balances.
+2. Another strategy is to take a snapshot of all account balances on a block with large certainty that there will be no chain reorganisation that affects it. Then, the memory for the cached views of blocks before the snapshot can be released.
 
 # Describe what needs to be considered in the client app
 1. To be able to send transaction, the client app has to allow user to sign transaction with private key.

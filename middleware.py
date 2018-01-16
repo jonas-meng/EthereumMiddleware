@@ -4,6 +4,25 @@
 import json
 import copy
 
+def median_of_medians(A, i):
+    sublists = [A[j:j+5] for j in range(0, len(A), 5)]
+    medians = [sorted(sublist)[len(sublist)/2] for sublist in sublists]
+    if len(medians) <= 5:
+        pivot = sorted(medians)[len(medians)/2]
+    else:
+        pivot = median_of_medians(medians, len(medians)/2)
+
+    low = [j for j in A if j < pivot]
+    high = [j for j in A if j > pivot]
+
+    k = len(low)
+    if i < k:
+        return median_of_medians(low,i)
+    elif i > k:
+        return median_of_medians(high,i-k-1)
+    else:
+        return pivot
+
 
 class Block:
     def __init__(self, prevhash, hash, number, transfers, balances):
@@ -19,13 +38,11 @@ class Block:
             self.perm_trx(trx.get('amount'), trx.get('receiver'), trx.get('sender'))
     
     def perm_trx(self, amount, receiver, sender):
-        if not self.balances.get(receiver):
-            self.balances[receiver] += amount
-        if not self.balances.get(sender):
-            self.balances[sender] -= amount
+        self.balances[receiver] += amount
+        self.balances[sender] -= amount
 
     def get_median(self):
-        return sorted(self.balances.values())[len(self.balances) / 2]
+        return median_of_medians(self.balances.values(), len(self.balances)/2)
 
 
 class Middleware:
@@ -40,7 +57,7 @@ class Middleware:
             self.head = block
         else:
             block.update_balances(self.blocks[block.prevhash].balances)
-            if block.number >= self.head.number:
+            if block.number > self.head.number:
                 self.head.number = block
         
     def get_median(self):
